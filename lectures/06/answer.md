@@ -14,7 +14,11 @@
 
 <!-- 基礎・実装・発展のどれか1つに取り組めば完了です。 -->
 
-- 取り組んだレベル：基礎 / 実装 / 発展
-- やったこと：
+- 取り組んだレベル：基礎
+- やったこと：エージェント側（`app/mcp_servers.json`・`app/mcp_agent.py`）を変更せず、サーバー側の `app/mcp_server.py` に `server.tool()(tools.get_lecture_summary)` を1行追加した。追加後に `git status`、`--list-tools`、`--trace "第2回では何を学びますか？"`、`pytest -q` を順に実行して動作を確認した。
 - 結果：
-- 気づき・疑問：
+  - `git status` の変更対象は `app/mcp_server.py` のみ。
+  - `--list-tools` でモデルに見えているツール数が 7 個から 8 個に増え、`glossary_get_lecture_summary`（引数: `lecture: integer`）が表示された。
+  - `--trace "第2回では何を学びますか？"` で `[tool call] glossary_get_lecture_summary({'lecture': 2})` が呼ばれ、第2回の要点をもとに回答が返った（入力 5,942 tokens / 出力 218 tokens / モデル応答 2 回）。
+  - `pytest -q` は 22 passed で全件通過した。
+- 気づき・疑問：エージェントは起動ごとに MCP サーバーからツール一覧を動的取得するため、サーバー側に1行足すだけでクライアント無変更のまま新しいツールが認識・呼び出しされることを確認した。一方で、同じ `glossary` サーバーのみへの問い合わせでも、`fetch` と `aws` を設定に残した状態では入力が 5,942 tokens となり、STEP 2（`glossary` のみ・715 tokens）と比べて約8倍に増えた。使わない MCP サーバーを常時接続しておくと、無関係な質問でも毎回ツール定義分のトークンコストがかかることが実測できた。
